@@ -2,6 +2,7 @@
 # -*-coding: utf-8-*-
 
 from gensim.models import word2vec
+from sklearn.cross_validation import KFold
 from nltk.corpus import stopwords
 import nltk.data
 import re
@@ -9,6 +10,8 @@ import os
 import json
 import numpy
 import logging
+
+numpy.seterr(divide='ignore', invalid='ignore')
 
 #variable para separar parrafos de tweet
 tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
@@ -82,33 +85,21 @@ def preparar_texto(texto, useStopwords, useSimbolos):
 
 print('----------10 cross fold----------')
 print('---------------------------------')
-
-particion = len(tweets_categorizados)//10
-
-for i in range(10):
-    #crear particiones train y test
-    print('particion ' + str(i+1) + ' de 10')
-    if i==0:
-        train = tweets_categorizados[particion:]
-        test = tweets_categorizados[:particion]
-    elif i==9:
-        train = tweets_categorizados[:particion*i]
-        test = tweets_categorizados[particion*i:]
-    else:
-        train = tweets_categorizados[:particion*i]+tweets_categorizados[particion*(i+1):]
-        test = tweets_categorizados[particion*i:particion*(i+1)]
-    
+i = 1
+#crear particiones train y test
+kf = KFold(len(tweets_categorizados), n_folds=10)
+for train, test in kf:
+    print('particion ' + str(i) + ' de 10')
+  
     #crear lista de tweets procesados del train
     documentsTrain = []
     for j in train:
-        #documents.append(preparar_texto(j[1], eliminarStopwords, eliminarSimbolos))
-        documentsTrain += preparar_texto(j[1], eliminarStopwords, eliminarSimbolos)
+        documentsTrain += preparar_texto(tweets_categorizados[j][1], eliminarStopwords, eliminarSimbolos)
 
     #crear lista de tweets procesados del test
     documentsTest = []
     for j in test:
-        #documents.append(preparar_texto(j[1], eliminarStopwords, eliminarSimbolos))
-        documentsTest += preparar_texto(j[1], eliminarStopwords, eliminarSimbolos)
+        documentsTest += preparar_texto(tweets_categorizados[j][1], eliminarStopwords, eliminarSimbolos)
 
     #nombre del archivo donde se guarda el modelo entrenado
     nombre_modelo = "p"+str(i+1)+"_nc_"+str(numCaracteristicas)+"_dv_"+str(dimVentana)+"_mp_"+str(minPalabras)
@@ -124,19 +115,17 @@ for i in range(10):
     #crear matriz de caracteristicas con cada tweet del train
     trainVectors = numpy.zeros((len(documentsTrain), numCaracteristicas), dtype="float32")
     vocabulario = set(modelo.index2word)
-    #maxWords = 0
     c = 0
     for document in documentsTrain:
         tweetVector = numpy.zeros((numCaracteristicas, ), dtype="float32")
-        #w = 0
+        w = 0
         for word in document:
             if word in vocabulario:
                 tweetVector = numpy.add(tweetVector, modelo[word])
-                #w += 1
-        #el vector del tweet se representa como un sumatorio de los vectores de cada una de sus palabras
+                w += 1
+        tweetVector = numpy.divide(tweetVector, w)
+        #el vector del tweet se representa como una media del sumatorio de los vectores de cada una de sus palabras
         trainVectors[c] = tweetVector
-        #if maxWords < w:
-            #maxWords = w
         c += 1
 
     #crear matriz de caracteristicas con cada tweet del test
@@ -144,15 +133,14 @@ for i in range(10):
     c = 0
     for document in documentsTest:
         tweetVector = numpy.zeros((numCaracteristicas, ), dtype="float32")
-        #w = 0
+        w = 0
         for word in document:
             if word in vocabulario:
                 tweetVector = numpy.add(tweetVector, modelo[word])
-                #w += 1
-        #el vector del tweet se representa como un sumatorio de los vectores de cada una de sus palabras
+                w += 1
+        tweetVector = numpy.divide(tweetVector, w)
+        #el vector del tweet se representa como una media del sumatorio de los vectores de cada una de sus palabras
         testVectors[c] = tweetVector
-        #if maxWords < w:
-            #maxWords = w
         c += 1
 
-
+    i +=1
