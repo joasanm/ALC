@@ -4,6 +4,7 @@
 from gensim.models import word2vec
 from sklearn import cross_validation
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import f1_score, confusion_matrix, make_scorer
 from nltk.corpus import stopwords
 import nltk.data
 import re
@@ -22,9 +23,9 @@ eliminarStopwords = True
 eliminarSimbolos = True
 
 #variables con los parametros de entrenamiento con word2vec
-numCaracteristicas = 100
-dimVentana = 4
-minPalabras = 5
+numCaracteristicas = 300
+dimVentana = 5
+minPalabras = 10
 numCpus = 4
 downsampling = 1e-3
 
@@ -118,8 +119,38 @@ for document in tweetsTokenizados:
 
 print('10 crossfold validation - random forest')
 print('----------------------------------')
+confusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
+
+#método para calcular el f1 y matriz de confusión de cada particion
+def scoreF1_cm(y_true, y_pred):
+    #ppos = metrics.precision_score(y_true, y_pred, pos_label='positive')
+    #pneg = metrics.precision_score(y_true, y_pred, pos_label='negative')
+    ##pr_pos = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='positive', warn_for=('precision', 'recall'))
+    ##pr_neg = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='negative', warn_for=('precision', 'recall'))
+    #cálculo del f1 como una media de f1s de tweets positivos y negativos
+    f1_pos = f1_score(y_true, y_pred, pos_label='positive', average='macro')
+    f1_neg = f1_score(y_true, y_pred, pos_label='negative', average='macro')
+    #actualización de la matriz de confusión
+    global confusionMatrix
+    cfm = confusion_matrix(y_true, y_pred, labels=['positive', 'negative', 'neutral'])
+    confusionMatrix += cfm
+    return (f1_pos + f1_neg)/2
+
+#método para crear una métrica de puntuación
+def scorer():
+    return make_scorer(scoreF1_cm, greater_is_better=True) 
 
 forest = RandomForestClassifier(n_estimators = 100)
-scores = cross_validation.cross_val_score(forest, tweetMatrix, tweetClass, cv=10)
-print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+scores = cross_validation.cross_val_score(forest, tweetMatrix, tweetClass, cv=10, scoring=scorer())
+print("F1: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+print confusionMatrix
+
+#almacenar resultados
+w = open('word2vec_randomForest.txt', 'w')
+w.write('nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n')
+w.write('F1: '+str(scores.mean())+ ' (+/- '+str(scores.std()*2)+')'+'\n')
+w.write('Matriz de confusion:\n')
+w.write(str(confusionMatrix)+'\n')
+w.write('\n')
+w.close()
 
