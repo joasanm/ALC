@@ -1,0 +1,70 @@
+nCaracteristicas: 100	dimVentana: 3	minPalabras: 10
+F1: 0.377613029263 (+/- 0.0311499163988)
+Matriz de confusion:
+[[1218   12 1433]
+ [ 365   11  657]
+ [ 875   18 2617]]
+
+nCaracteristicas: 200	dimVentana: 3	minPalabras: 10
+F1: 0.373187522907 (+/- 0.0246768692651)
+Matriz de confusion:
+[[1168   11 1484]
+ [ 365   17  651]
+ [ 893   24 2593]]
+
+nCaracteristicas: 300	dimVentana: 3	minPalabras: 10
+F1: 0.376092849328 (+/- 0.0264565011994)
+Matriz de confusion:
+[[1183   13 1467]
+ [ 387   16  630]
+ [ 877   18 2615]]
+
+nCaracteristicas: 400	dimVentana: 3	minPalabras: 10
+F1: 0.373336222384 (+/- 0.0349352834618)
+Matriz de confusion:
+[[1203   13 1447]
+ [ 374   13  646]
+ [ 917   17 2576]]
+
+nCaracteristicas: 500	dimVentana: 3	minPalabras: 10
+F1: 0.374733704041 (+/- 0.0355766562052)
+Matriz de confusion:
+[[1191   10 1462]
+ [ 332   18  683]
+ [ 918   22 2570]]
+
+nCaracteristicas: 600	dimVentana: 3	minPalabras: 10
+F1: 0.370551975075 (+/- 0.0313247968872)
+Matriz de confusion:
+[[1193   12 1458]
+ [ 372   15  646]
+ [ 951   17 2542]]
+
+nCaracteristicas: 700	dimVentana: 3	minPalabras: 10
+F1: 0.36567792019 (+/- 0.0361787166776)
+Matriz de confusion:
+[[1152   18 1493]
+ [ 392   11  630]
+ [ 920   12 2578]]
+
+nCaracteristicas: 800	dimVentana: 3	minPalabras: 10
+F1: 0.373769100794 (+/- 0.024816894691)
+Matriz de confusion:
+[[1201    8 1454]
+ [ 385   12  636]
+ [ 903   12 2595]]
+
+nCaracteristicas: 900	dimVentana: 3	minPalabras: 10
+F1: 0.362271162123 (+/- 0.036047091956)
+Matriz de confusion:
+[[1161    8 1494]
+ [ 360   12  661]
+ [ 978   17 2515]]
+
+nCaracteristicas: 1000	dimVentana: 3	minPalabras: 10
+F1: 0.375166223758 (+/- 0.0314863949833)
+Matriz de confusion:
+[[1216   16 1431]
+ [ 366   13  654]
+ [ 915   18 2577]]
+

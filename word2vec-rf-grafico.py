@@ -3,7 +3,7 @@
 
 from gensim.models import word2vec
 from sklearn import cross_validation
-from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score, confusion_matrix, make_scorer
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
@@ -20,26 +20,27 @@ numpy.seterr(divide='ignore', invalid='ignore')
 tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 #variables para tener en cuenta stopwords y simbolos 
-eliminarStopwords = True
-eliminarSimbolos = True
+eliminarStopwords = False
+eliminarSimbolos = False
 
 #matriz de confusion
 confusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
-bestConfusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
-bestF1 = 0
 
 #variables con los parametros de entrenamiento con word2vec
 numCaracteristicas = 100
 dimVentana = 3
-minPalabras = 12
+minPalabras = 20
 numCpus = 4
 downsampling = 1e-3
+
+#parametro del random forest
+estimadores = 10
 
 #variables para dibujar grafico
 f1 = numpy.zeros((10, ), dtype='float32')
 desviacion = numpy.zeros((10, ), dtype='float32')
-axis = [12,21,0,100]
-vx = [12,13,14,15,16,17,18,19,20,21]
+axis = [10,100,0,100]
+vx = [10,20,30,40,50,60,70,80,90,100]
 
 #informacion de los procesos que realizan los modulos de Gensim
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -121,11 +122,11 @@ def scorer():
     return make_scorer(scoreF1_cm, greater_is_better=True) 
 
 #archivo donde se almacenan los resultados
-textSave = open('word2vec_svmLineal_minPalabras.txt', 'w')
+textSave = open('word2vec_randomForest.txt', 'w')
 
 #clasificar 10 veces
 for i in range(10):
-    print 'nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n'
+    print 'estimadores: '+str(estimadores)+'\tnCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n'
 
     print('entrenando modelo word2vec')
     print('----------------------------------')
@@ -152,18 +153,21 @@ for i in range(10):
         tweetMatrix[c] = tweetVector
         c += 1
 
-    print('10 crossfold validation - lineal support vector machine')
+    #print 'tweetMatrix: '+str(c)
+    #print 'tweetClass: '+str(len(tweetClass))
+
+    print('10 crossfold validation - random forest')
     print('----------------------------------')
     confusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
 
-    clf = svm.SVC(kernel='linear', C=1, degree=1)
-    scores = cross_validation.cross_val_score(clf, tweetMatrix, tweetClass, cv=10, scoring=scorer())
-    print("F1: %0.2f (+/- %0.2f)" % (scores.mean()*100, scores.std() * 200))
+    forest = RandomForestClassifier(n_estimators = estimadores)
+    scores = cross_validation.cross_val_score(forest, tweetMatrix, tweetClass, cv=10, scoring=scorer())
+    print("F1: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
     print confusionMatrix
 
     #almacenar resultados
-    textSave.write('nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n')
-    textSave.write('F1: '+str(scores.mean()*100)+ ' (+/- '+str(scores.std()*200)+')'+'\n')
+    textSave.write('estimadores: '+str(estimadores)+'\tnCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n')
+    textSave.write('F1: '+str(scores.mean())+ ' (+/- '+str(scores.std()*2)+')'+'\n')
     textSave.write('Matriz de confusion:\n')
     textSave.write(str(confusionMatrix)+'\n')
     textSave.write('\n')
@@ -171,39 +175,20 @@ for i in range(10):
     #almacenar media y desviacion
     f1[i]=scores.mean()*100
     desviacion[i]=scores.std()*200
-
-    #almacenar mejor matriz de confusion
-    if scores.mean() > bestF1:
-        bestConfusionMatrix = confusionMatrix
     
     #actualización de variables
+    estimadores += 10
     #numCaracteristicas += 100
     #dimVentana += 1
-    minPalabras += 1
+    #minPalabras += 10
 
 textSave.close()
 
-#dibujar grafica de f-score
+#dibujar grafica
 plt.errorbar(vx, f1, yerr=desviacion)
 plt.axis(axis)
 plt.ylabel('F-score')
-plt.xlabel('Frecuencia minima de palabra')
-plt.title('Variacion del f-score segun la frecuencia minima de palabra')
-plt.show()
-
-#normalizar matriz por filas
-mcn = bestConfusionMatrix.astype('float')/bestConfusionMatrix.sum(axis=1)[:, numpy.newaxis]
-tick_marks = [0,1,2]
-tick_names = ['positivo','negativo','neutral']
-
-#dibujar matriz de confusion
-plt.imshow(mcn, interpolation='nearest', cmap=plt.cm.Blues)
-plt.title('Matriz de confusion')
-plt.colorbar()
-plt.xticks(tick_marks, tick_names, rotation=45)
-plt.yticks(tick_marks, tick_names)
-plt.tight_layout()
-plt.ylabel('Polaridad real')
-plt.xlabel('Polaridad predicha')
+plt.xlabel('Estimadores de random forest')
+plt.title('Variacion del f-score segun el numero de estimadores')
 plt.show()
 

@@ -3,7 +3,7 @@
 
 from gensim.models import word2vec
 from sklearn import cross_validation
-from sklearn import svm
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, confusion_matrix, make_scorer
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
@@ -30,16 +30,16 @@ bestF1 = 0
 
 #variables con los parametros de entrenamiento con word2vec
 numCaracteristicas = 100
-dimVentana = 3
-minPalabras = 12
+dimVentana = 2
+minPalabras = 13
 numCpus = 4
 downsampling = 1e-3
 
 #variables para dibujar grafico
 f1 = numpy.zeros((10, ), dtype='float32')
 desviacion = numpy.zeros((10, ), dtype='float32')
-axis = [12,21,0,100]
-vx = [12,13,14,15,16,17,18,19,20,21]
+axis = [2,11,0,100]
+vx = [2,3,4,5,6,7,8,9,10,11]
 
 #informacion de los procesos que realizan los modulos de Gensim
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -87,7 +87,6 @@ def preparar_texto(texto, useStopwords, useSimbolos):
     for frase in frases:
         if len(frase) > 0:
             tweet += preparar_frase(frase, useStopwords, useSimbolos)
-            #tweet.append(preparar_frase(frase, useStopwords, useSimbolos))
     return tweet
 
 print('tokenizando tweets')
@@ -103,10 +102,6 @@ for tweet in tweets_categorizados:
 
 #método para calcular el f1 y matriz de confusión de cada particion
 def scoreF1_cm(y_true, y_pred):
-    #ppos = metrics.precision_score(y_true, y_pred, pos_label='positive')
-    #pneg = metrics.precision_score(y_true, y_pred, pos_label='negative')
-    ##pr_pos = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='positive', warn_for=('precision', 'recall'))
-    ##pr_neg = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='negative', warn_for=('precision', 'recall'))
     #cálculo del f1 como una media de f1s de tweets positivos y negativos
     f1_pos = f1_score(y_true, y_pred, pos_label='positive', average='macro')
     f1_neg = f1_score(y_true, y_pred, pos_label='negative', average='macro')
@@ -121,7 +116,7 @@ def scorer():
     return make_scorer(scoreF1_cm, greater_is_better=True) 
 
 #archivo donde se almacenan los resultados
-textSave = open('word2vec_svmLineal_minPalabras.txt', 'w')
+textSave = open('word2vec_lr_dimVentana.txt', 'w')
 
 #clasificar 10 veces
 for i in range(10):
@@ -152,11 +147,11 @@ for i in range(10):
         tweetMatrix[c] = tweetVector
         c += 1
 
-    print('10 crossfold validation - lineal support vector machine')
+    print('10 crossfold validation - logistic regression')
     print('----------------------------------')
     confusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
 
-    clf = svm.SVC(kernel='linear', C=1, degree=1)
+    clf = LogisticRegression(max_iter=1000, C=0.5)
     scores = cross_validation.cross_val_score(clf, tweetMatrix, tweetClass, cv=10, scoring=scorer())
     print("F1: %0.2f (+/- %0.2f)" % (scores.mean()*100, scores.std() * 200))
     print confusionMatrix
@@ -178,8 +173,8 @@ for i in range(10):
     
     #actualización de variables
     #numCaracteristicas += 100
-    #dimVentana += 1
-    minPalabras += 1
+    dimVentana += 1
+    #minPalabras += 1
 
 textSave.close()
 
@@ -187,8 +182,8 @@ textSave.close()
 plt.errorbar(vx, f1, yerr=desviacion)
 plt.axis(axis)
 plt.ylabel('F-score')
-plt.xlabel('Frecuencia minima de palabra')
-plt.title('Variacion del f-score segun la frecuencia minima de palabra')
+plt.xlabel('Dimension de la ventana')
+plt.title('Variacion del f-score segun la dimension de la ventana')
 plt.show()
 
 #normalizar matriz por filas

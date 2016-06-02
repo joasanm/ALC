@@ -1,0 +1,70 @@
+estimadores: 10	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.389227043322 (+/- 0.0431830672749)
+Matriz de confusion:
+[[1014  191 1458]
+ [ 329  120  584]
+ [ 902  220 2388]]
+
+estimadores: 20	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.399203451456 (+/- 0.0288191362156)
+Matriz de confusion:
+[[1034  117 1512]
+ [ 334  108  591]
+ [ 879  114 2517]]
+
+estimadores: 30	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.385759075202 (+/- 0.036936865638)
+Matriz de confusion:
+[[1096  101 1466]
+ [ 368   67  598]
+ [ 902  102 2506]]
+
+estimadores: 40	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.391141812005 (+/- 0.0302661757843)
+Matriz de confusion:
+[[1091   77 1495]
+ [ 350   77  606]
+ [ 922   77 2511]]
+
+estimadores: 50	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.394689950905 (+/- 0.0369411440077)
+Matriz de confusion:
+[[1094   60 1509]
+ [ 343   65  625]
+ [ 818   72 2620]]
+
+estimadores: 60	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.383818823324 (+/- 0.0296130703118)
+Matriz de confusion:
+[[1120   53 1490]
+ [ 390   44  599]
+ [ 851   68 2591]]
+
+estimadores: 70	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.397452646253 (+/- 0.0384896088179)
+Matriz de confusion:
+[[1137   54 1472]
+ [ 368   68  597]
+ [ 868   71 2571]]
+
+estimadores: 80	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.392670274778 (+/- 0.0268618422578)
+Matriz de confusion:
+[[1075   54 1534]
+ [ 347   68  618]
+ [ 841   59 2610]]
+
+estimadores: 90	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.378065571486 (+/- 0.0272244846602)
+Matriz de confusion:
+[[1069   42 1552]
+ [ 372   48  613]
+ [ 876   55 2579]]
+
+estimadores: 100	nCaracteristicas: 100	dimVentana: 3	minPalabras: 20
+F1: 0.391816607878 (+/- 0.0265401190336)
+Matriz de confusion:
+[[1118   36 1509]
+ [ 369   57  607]
+ [ 870   36 2604]]
+

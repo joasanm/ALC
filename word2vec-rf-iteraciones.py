@@ -3,7 +3,7 @@
 
 from gensim.models import word2vec
 from sklearn import cross_validation
-from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score, confusion_matrix, make_scorer
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
@@ -31,15 +31,19 @@ bestF1 = 0
 #variables con los parametros de entrenamiento con word2vec
 numCaracteristicas = 100
 dimVentana = 3
-minPalabras = 12
+minPalabras = 20
 numCpus = 4
 downsampling = 1e-3
+iteraciones = 10
+
+#parametro del random forest
+estimadores = 100
 
 #variables para dibujar grafico
 f1 = numpy.zeros((10, ), dtype='float32')
 desviacion = numpy.zeros((10, ), dtype='float32')
-axis = [12,21,0,100]
-vx = [12,13,14,15,16,17,18,19,20,21]
+axis = [10,100,0,100]
+vx = [10,20,30,40,50,60,70,80,90,100]
 
 #informacion de los procesos que realizan los modulos de Gensim
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -87,7 +91,6 @@ def preparar_texto(texto, useStopwords, useSimbolos):
     for frase in frases:
         if len(frase) > 0:
             tweet += preparar_frase(frase, useStopwords, useSimbolos)
-            #tweet.append(preparar_frase(frase, useStopwords, useSimbolos))
     return tweet
 
 print('tokenizando tweets')
@@ -97,16 +100,11 @@ tweetsTokenizados = []
 #crear lista con la clasificación de cada tweet
 tweetClass = []
 for tweet in tweets_categorizados:
-    #tweetsTokenizados += preparar_texto(tweet[1], eliminarStopwords, eliminarSimbolos)
     tweetsTokenizados.append(preparar_texto(tweet[1], eliminarStopwords, eliminarSimbolos))
     tweetClass.append(tweet[2])
 
 #método para calcular el f1 y matriz de confusión de cada particion
 def scoreF1_cm(y_true, y_pred):
-    #ppos = metrics.precision_score(y_true, y_pred, pos_label='positive')
-    #pneg = metrics.precision_score(y_true, y_pred, pos_label='negative')
-    ##pr_pos = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='positive', warn_for=('precision', 'recall'))
-    ##pr_neg = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='negative', warn_for=('precision', 'recall'))
     #cálculo del f1 como una media de f1s de tweets positivos y negativos
     f1_pos = f1_score(y_true, y_pred, pos_label='positive', average='macro')
     f1_neg = f1_score(y_true, y_pred, pos_label='negative', average='macro')
@@ -121,17 +119,16 @@ def scorer():
     return make_scorer(scoreF1_cm, greater_is_better=True) 
 
 #archivo donde se almacenan los resultados
-textSave = open('word2vec_svmLineal_minPalabras.txt', 'w')
+textSave = open('word2vec_randomForest_'+str(estimadores)+'_iteraciones.txt', 'w')
 
-#clasificar 10 veces
 for i in range(10):
-    print 'nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n'
+    print 'nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\titeraciones: '+str(iteraciones)+'\n'
 
     print('entrenando modelo word2vec')
     print('----------------------------------')
 
     #entrenar modelo
-    modelo = word2vec.Word2Vec(tweetsTokenizados, workers=numCpus, size=numCaracteristicas, min_count=minPalabras, window=dimVentana, sample=downsampling)
+    modelo = word2vec.Word2Vec(tweetsTokenizados, workers=numCpus, size=numCaracteristicas, min_count=minPalabras, window=dimVentana, sample=downsampling, iter=iteraciones)
 
     print('transformando tweets a vectores')
     print('----------------------------------')
@@ -152,22 +149,22 @@ for i in range(10):
         tweetMatrix[c] = tweetVector
         c += 1
 
-    print('10 crossfold validation - lineal support vector machine')
+    print('10 crossfold validation - random forest')
     print('----------------------------------')
     confusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
 
-    clf = svm.SVC(kernel='linear', C=1, degree=1)
-    scores = cross_validation.cross_val_score(clf, tweetMatrix, tweetClass, cv=10, scoring=scorer())
+    forest = RandomForestClassifier(n_estimators = estimadores)
+    scores = cross_validation.cross_val_score(forest, tweetMatrix, tweetClass, cv=10, scoring=scorer())
     print("F1: %0.2f (+/- %0.2f)" % (scores.mean()*100, scores.std() * 200))
     print confusionMatrix
 
     #almacenar resultados
-    textSave.write('nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n')
+    textSave.write('nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\titeraciones: '+str(iteraciones)+'\n')
     textSave.write('F1: '+str(scores.mean()*100)+ ' (+/- '+str(scores.std()*200)+')'+'\n')
     textSave.write('Matriz de confusion:\n')
     textSave.write(str(confusionMatrix)+'\n')
     textSave.write('\n')
-
+    
     #almacenar media y desviacion
     f1[i]=scores.mean()*100
     desviacion[i]=scores.std()*200
@@ -175,11 +172,12 @@ for i in range(10):
     #almacenar mejor matriz de confusion
     if scores.mean() > bestF1:
         bestConfusionMatrix = confusionMatrix
-    
+
     #actualización de variables
     #numCaracteristicas += 100
     #dimVentana += 1
-    minPalabras += 1
+    #minPalabras += 10
+    iteraciones += 10
 
 textSave.close()
 
@@ -187,8 +185,8 @@ textSave.close()
 plt.errorbar(vx, f1, yerr=desviacion)
 plt.axis(axis)
 plt.ylabel('F-score')
-plt.xlabel('Frecuencia minima de palabra')
-plt.title('Variacion del f-score segun la frecuencia minima de palabra')
+plt.xlabel('Numero de iteraciones del modelo')
+plt.title('Variacion del f-score segun el numero de iteraciones')
 plt.show()
 
 #normalizar matriz por filas

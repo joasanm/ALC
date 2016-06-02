@@ -3,7 +3,7 @@
 
 from gensim.models import word2vec
 from sklearn import cross_validation
-from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score, confusion_matrix, make_scorer
 import matplotlib.pyplot as plt
 from nltk.corpus import stopwords
@@ -34,6 +34,9 @@ dimVentana = 3
 minPalabras = 12
 numCpus = 4
 downsampling = 1e-3
+
+#parametro del random forest
+estimadores = 100
 
 #variables para dibujar grafico
 f1 = numpy.zeros((10, ), dtype='float32')
@@ -103,10 +106,6 @@ for tweet in tweets_categorizados:
 
 #método para calcular el f1 y matriz de confusión de cada particion
 def scoreF1_cm(y_true, y_pred):
-    #ppos = metrics.precision_score(y_true, y_pred, pos_label='positive')
-    #pneg = metrics.precision_score(y_true, y_pred, pos_label='negative')
-    ##pr_pos = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='positive', warn_for=('precision', 'recall'))
-    ##pr_neg = metrics.precision_recall_fscore_support(y_true, y_pred, pos_label='negative', warn_for=('precision', 'recall'))
     #cálculo del f1 como una media de f1s de tweets positivos y negativos
     f1_pos = f1_score(y_true, y_pred, pos_label='positive', average='macro')
     f1_neg = f1_score(y_true, y_pred, pos_label='negative', average='macro')
@@ -121,9 +120,8 @@ def scorer():
     return make_scorer(scoreF1_cm, greater_is_better=True) 
 
 #archivo donde se almacenan los resultados
-textSave = open('word2vec_svmLineal_minPalabras.txt', 'w')
+textSave = open('word2vec_randomForest_'+str(estimadores)+'_minPalabras.txt', 'w')
 
-#clasificar 10 veces
 for i in range(10):
     print 'nCaracteristicas: '+str(numCaracteristicas)+'\tdimVentana: '+str(dimVentana)+'\tminPalabras: '+str(minPalabras)+'\n'
 
@@ -152,12 +150,12 @@ for i in range(10):
         tweetMatrix[c] = tweetVector
         c += 1
 
-    print('10 crossfold validation - lineal support vector machine')
+    print('10 crossfold validation - random forest')
     print('----------------------------------')
     confusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
 
-    clf = svm.SVC(kernel='linear', C=1, degree=1)
-    scores = cross_validation.cross_val_score(clf, tweetMatrix, tweetClass, cv=10, scoring=scorer())
+    forest = RandomForestClassifier(n_estimators = estimadores)
+    scores = cross_validation.cross_val_score(forest, tweetMatrix, tweetClass, cv=10, scoring=scorer())
     print("F1: %0.2f (+/- %0.2f)" % (scores.mean()*100, scores.std() * 200))
     print confusionMatrix
 
@@ -167,7 +165,7 @@ for i in range(10):
     textSave.write('Matriz de confusion:\n')
     textSave.write(str(confusionMatrix)+'\n')
     textSave.write('\n')
-
+    
     #almacenar media y desviacion
     f1[i]=scores.mean()*100
     desviacion[i]=scores.std()*200

@@ -30,8 +30,8 @@ bestF1 = 0
 
 #variables con los parametros de entrenamiento con word2vec
 numCaracteristicas = 100
-dimVentana = 3
-minPalabras = 12
+dimVentana = 2
+minPalabras = 20
 numCpus = 4
 downsampling = 1e-3
 
@@ -39,7 +39,7 @@ downsampling = 1e-3
 f1 = numpy.zeros((10, ), dtype='float32')
 desviacion = numpy.zeros((10, ), dtype='float32')
 axis = [12,21,0,100]
-vx = [12,13,14,15,16,17,18,19,20,21]
+vx = [2,3,4,5,6,7,8,9,10,11]
 
 #informacion de los procesos que realizan los modulos de Gensim
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -121,7 +121,7 @@ def scorer():
     return make_scorer(scoreF1_cm, greater_is_better=True) 
 
 #archivo donde se almacenan los resultados
-textSave = open('word2vec_svmLineal_minPalabras.txt', 'w')
+textSave = open('word2vec_svmLineal_dimventana.txt', 'w')
 
 #clasificar 10 veces
 for i in range(10):
@@ -152,11 +152,11 @@ for i in range(10):
         tweetMatrix[c] = tweetVector
         c += 1
 
-    print('10 crossfold validation - lineal support vector machine')
+    print('10 crossfold validation - random forest')
     print('----------------------------------')
     confusionMatrix = numpy.array([[0,0,0],[0,0,0],[0,0,0]])
 
-    clf = svm.SVC(kernel='linear', C=1, degree=1)
+    clf = svm.SVC(kernel='linear', C=1)
     scores = cross_validation.cross_val_score(clf, tweetMatrix, tweetClass, cv=10, scoring=scorer())
     print("F1: %0.2f (+/- %0.2f)" % (scores.mean()*100, scores.std() * 200))
     print confusionMatrix
@@ -178,8 +178,8 @@ for i in range(10):
     
     #actualización de variables
     #numCaracteristicas += 100
-    #dimVentana += 1
-    minPalabras += 1
+    dimVentana += 1
+    #minPalabras += 1
 
 textSave.close()
 
@@ -187,8 +187,8 @@ textSave.close()
 plt.errorbar(vx, f1, yerr=desviacion)
 plt.axis(axis)
 plt.ylabel('F-score')
-plt.xlabel('Frecuencia minima de palabra')
-plt.title('Variacion del f-score segun la frecuencia minima de palabra')
+plt.xlabel('Dimension de la ventana')
+plt.title('Variacion del f-score segun la dimension de la ventana')
 plt.show()
 
 #normalizar matriz por filas
